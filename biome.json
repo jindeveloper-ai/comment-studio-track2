@@ -1,0 +1,10 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
+  "files": {
+    "includes": ["**", "!dist", "!node_modules", "!.local", "!pnpm-lock.yaml"]
+  },
+  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2 },
+  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "linter": { "enabled": true, "rules": { "preset": "none" } },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } }
+}

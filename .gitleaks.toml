@@ -1,0 +1,18 @@
+title = "Comment Studio public source safety"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "google-session-cookie"
+description = "Google browser session cookie"
+regex = '''(?i)(?:__Secure-[13]P)?(?:SAPISID|APISID|SSID|HSID|SID(?:CC|TS)?)\s*(?:=|:)\s*["']?([A-Za-z0-9_./+%:-]{16,})'''
+secretGroup = 1
+keywords = ["sapisid", "apisid", "ssid", "hsid", "sid"]
+
+[[rules]]
+id = "browser-bearer-token"
+description = "Bearer token from a browser or API session"
+regex = '''(?i)bearer[ \t]+([A-Za-z0-9_./+=:-]{24,})'''
+secretGroup = 1
+keywords = ["bearer"]

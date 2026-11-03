@@ -1,0 +1,33 @@
+# Project checks and credential guards. Preserve these project-specific hooks.
+default_install_hook_types: [pre-commit]
+fail_fast: false
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-ast
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=no]
+
+  - repo: local
+    hooks:
+      - id: public-source-safety
+        name: block credentials and browser sessions from Git
+        entry: node scripts/check-public.mjs --staged
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: project-node-lint
+        name: project node lint
+        entry: npm run lint --
+        language: system
+        files: \.(js|jsx|ts|tsx)$

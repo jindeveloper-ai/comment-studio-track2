@@ -1,0 +1,6 @@
+allowBuilds:
+  "@google/genai": false
+  esbuild: true
+  protobufjs: false
+minimumReleaseAgeExclude:
+  - "@google/genai@2.31.0"

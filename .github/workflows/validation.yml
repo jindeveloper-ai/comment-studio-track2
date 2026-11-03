@@ -1,0 +1,124 @@
+# Project validation and private-data protection.
+name: Validation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  prek:
+    name: prek
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "24"
+      - run: npm install --global pnpm@11.24.0
+      - run: pnpm install --frozen-lockfile
+      - name: Install pinned Gitleaks for the commit guard
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece
+
+  native:
+    name: native-tests-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "24"
+      - run: npm install --global pnpm@11.24.0
+      - run: pnpm install --frozen-lockfile
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "24"
+      - name: Install pinned Gitleaks
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Check public files and all Git history without exposing matches
+        run: node scripts/check-public.mjs --history
+      - name: Detect conditional scanner scope
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.ref_type }}" == "tag" || \
+                "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "dependencies=true" >> "$GITHUB_OUTPUT"
+            echo "security=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [[ -z "$base" || "$base" =~ ^0+$ ]] || \
+             ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "dependencies=true" >> "$GITHUB_OUTPUT"
+            echo "security=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed="$(git diff --name-only "$base" HEAD)"
+          dependency_pattern='(^|/)(Cargo.lock|Gemfile.lock|Package.resolved|go.sum|'
+          dependency_pattern+='package(-lock)?\.json|pnpm-lock\.yaml|pyproject\.toml|'
+          dependency_pattern+='requirements[^/]*\.txt|uv\.lock|yarn\.lock)$'
+          if grep -Eq "$dependency_pattern" <<< "$changed"; then
+            echo "dependencies=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "dependencies=false" >> "$GITHUB_OUTPUT"
+          fi
+          security_path_pattern='(auth|credential|permission|secret|token|upload|webhook|'
+          security_path_pattern+='(^|[-_/])(api|file|fs|http|process)([-_/.]|$))'
+          security_code_pattern='auth|authorization|credential|permission|secret|token|webhook|'
+          security_code_pattern+='subprocess|child_process|spawn\(|exec\(|open\(|Path\(|FileManager|'
+          security_code_pattern+='read_text|write_text|fetch\(|requests\.|urllib|https?://'
+          if grep -Eiq "$security_path_pattern" <<< "$changed" || \
+             git diff --unified=0 "$base" HEAD -- \
+               '*.c' '*.cc' '*.cpp' '*.go' '*.js' '*.jsx' '*.php' '*.py' '*.rb' \
+               '*.rs' '*.sh' '*.swift' '*.ts' '*.tsx' \
+               | grep -Eiq "$security_code_pattern"; then
+            echo "security=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "security=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Scan dependencies with OSV
+        if: steps.scope.outputs.dependencies == 'true'
+        uses: google/osv-scanner-action/osv-scanner-action@40a8940a65eab1544a6af759e43d936201a131a2
+        with:
+          scan-args: |-
+            --include-git-root
+            --recursive
+            ./
+      - name: Set up Python for Semgrep
+        if: steps.scope.outputs.security == 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.13"
+      - name: Install Semgrep
+        if: steps.scope.outputs.security == 'true'
+        run: python -m pip install semgrep==1.173.0
+      - name: Scan security-sensitive source with Semgrep
+        if: steps.scope.outputs.security == 'true'
+        run: >-
+          semgrep scan --config=p/typescript --config=p/javascript --error
+          --metrics=off src scripts
