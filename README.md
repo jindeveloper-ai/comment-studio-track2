@@ -1,108 +1,83 @@
 # 운명원 · Comment Studio
 
+**영상 맥락을 읽고, 댓글 초안을 검수한 뒤, 실제 게시 결과까지 확인하는 로컬 대시보드입니다.**
+
+제이지그룹 AI PM 과제 Track 2 · YouTube 댓글 워크플로
+
+[시연 영상](#시연-영상) · [빠른 시작](#빠른-시작) · [기술과 출처](#기술과-출처) · [검증](#검증)
+
 ## 시연 영상
 
-세 계정의 연결, 영상별 댓글 초안, 실제 YouTube 게시와 결과 확인을 담은 2분 38초 시연입니다.
+**2분 38초** 동안 세 프로필 연결, 영상별 초안 비교, 실제 댓글 입력과 게시 확인을 보여줍니다.
 
 https://github.com/user-attachments/assets/23c7dd53-d2a3-4f17-a8e8-abf1506fc4cf
 
 [Google Drive에서 1080p 영상 재생](https://drive.google.com/file/d/1AeM-uR6TBH4u_tNLE6SJrW5pLQvwEok7/view)
 
-초안 요청은 캐시를 우선 사용하며, 새 생성·재생성 요청은 영상별 한국시간 하루 5회로 제한합니다. 수정한 댓글도 이미 게시한 문장과 같으면 다른 영상에 재사용할 수 없습니다.
+## 사용 흐름
 
-삭제 완료 응답을 확보하지 못하면 ‘삭제 여부 확인’으로 작성 프로필의 공식 YouTube 댓글 기록을 확인할 수 있습니다. 기록에 활동이 없는 경우는 ‘댓글 없음 확인’으로 표시하며, 직접 삭제 성공 응답을 받은 경우와 구분합니다. 댓글 검색은 정확한 링크를 우선 사용하고 최신순 추가 로딩도 시도합니다. 전용 프로필 연결·게시·삭제 시 YouTube 표시 언어가 한국어인지 확인합니다.
+| 단계 | 화면에서 하는 일 |
+| --- | --- |
+| **01 · 영상 불러오기** | 공개 검색에서 최대 20개를 가져오거나, YouTube 링크를 직접 입력합니다. |
+| **02 · 맥락과 초안 검수** | 고민과 근거를 읽고 초안을 수정합니다. 자막이 없으면 제목과 설명을 활용합니다. |
+| **03 · 게시와 결과 확인** | 최대 세 개의 전용 프로필 중 하나를 선택해 게시합니다. 브라우저가 한 글자씩 입력하고, 작성 채널과 본문을 대조해 결과를 기록합니다. |
 
-게시 완료 기록의 ‘댓글 삭제’를 누르면 영상·작성 프로필·본문을 보여주는 확인창이 열립니다. 삭제에 동의하면 게시 당시 계정, 정확한 댓글 ID와 본문을 대조한 후 YouTube에서 삭제합니다. 삭제 완료 표시와 대상 댓글의 소멸을 확인해야 ‘삭제 완료’로 기록합니다. 요청 후 결과가 불명확하거나 프로그램이 종료되면 ‘삭제 확인 필요’로 잠그며 자동 재삭제하지 않습니다. 쿠키·실패 캡처·운영 DB는 로컬 비공개 폴더에만 저장합니다.
+- **게시 제한** — 프로필 전체를 합쳐 영상당 1회, 한국시간 기준 하루 기본 10회입니다. 삭제 이후에도 사용량과 이력을 보존합니다.
+- **게시 전 검사** — 공백 포함 40~120자, 근거 문구, 링크·해시태그·허위 후기 패턴을 확인합니다. 생성과 재생성은 영상별 하루 5회까지 가능합니다.
+- **운영 기록** — 성공·실패·확인 필요 상태와 댓글 링크를 남깁니다. 게시 결과가 불명확할 때는 **재확인**으로 조회합니다. 삭제는 게시 당시 채널과 댓글 ID·본문을 대조한 뒤 실행합니다.
+- **유망 영상** — 조회수 1,000~5,000회와 시간당 150회 이상 증가를 실측으로 판정합니다. 이 목록에서는 초안까지만 준비합니다.
 
-댓글을 삭제해도 게시 이력, 영상당 1회 제한과 하루 사용량은 보존합니다. 같은 영상에서 계정 변경이나 초안 재생성으로 재게시할 수 없습니다. ‘초안 되돌리기 · 다른 영상 선택’은 편집 중인 초안을 비우고, 연결된 다른 프로필이 있으면 선택합니다. 다른 영상을 고른 후 강조된 ‘다시 생성’ 버튼으로 새 댓글을 준비할 수 있습니다. 게시 버튼을 사용할 수 없는 이유는 버튼 위에 표시합니다.
+## 빠른 시작
 
-제이지그룹 Track 2 과제를 위한 로컬 YouTube 댓글 대시보드입니다. 영상 수집 → 맥락과 초안 검수 → 기본 브라우저 전용 창의 글자별 입력·게시·확인을 연결합니다.
-
-## 실행
-
-Node.js 24, pnpm 11이 필요합니다. 기본 브라우저의 전용 프로필 게시 연결은 설치된 Chrome·Edge·Chromium을 지원합니다.
+**준비물** · Node.js 24, pnpm 11, Vertex AI를 사용할 수 있는 Google Cloud 프로젝트, 기본 브라우저로 설정된 Chrome·Edge·Chromium 중 하나
 
 ```sh
 pnpm install --frozen-lockfile
 cp .env.example .env
-# .env에 저장소 밖 서비스 계정 JSON의 경로와 Google Cloud 프로젝트 설정
-pnpm dev
 ```
 
-기본 주소는 `http://127.0.0.1:3000`입니다. 시작하면 운영체제의 기본 브라우저로 검수 페이지를 엽니다. 포트가 사용 중이면 터미널에 출력된 다음 로컬 포트를 사용합니다. 빌드 후 실행은 `pnpm build`, `pnpm start`입니다. 자동으로 페이지를 열지 않으려면 `pnpm start -- --no-open`을 사용합니다. 인터넷 연결이 필요하며 웹 호스팅 배포 대상이 아닙니다.
+1. `.env`에 `GOOGLE_CLOUD_PROJECT`와 저장소 밖 서비스 계정 JSON의 절대 경로를 `GOOGLE_APPLICATION_CREDENTIALS`로 설정합니다. 기본 리전은 `global`, 기본 모델은 `gemini-3.8-flash`입니다.
+2. `pnpm dev`로 실행합니다. 기본 주소는 **http://127.0.0.1:3000**입니다. 해당 포트가 사용 중이면 터미널에 표시된 주소로 접속합니다.
+3. **프로필 설정 → 기본 브라우저로 로그인**에서 Google 로그인과 YouTube 채널 준비를 마친 뒤 **로그인 완료 · 연결**을 누릅니다. Windows에서는 연결 전에 전용 로그인 창을 종료합니다.
+4. 영상을 선택하고 초안을 검수한 뒤 **댓글 달기**를 누르면 실제 YouTube에 게시합니다.
 
-## 인증 준비
+<details>
+<summary>브라우저 지원과 로그인 문제 해결</summary>
 
-- `.env`의 `GOOGLE_APPLICATION_CREDENTIALS`는 **저장소 밖** 서비스 계정 JSON의 절대 경로입니다. JSON 내용이나 개인 키를 환경변수에 복사하지 않습니다.
-- `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `VERTEX_MODEL`은 서버 전용입니다. 기본값은 `global`, `gemini-3.8-flash`입니다. 프로젝트의 Vertex 사용 권한·과금·할당량이 필요합니다.
-- `pnpm check:vertex`는 토큰 발급만 확인합니다. `pnpm check:vertex --generate`는 가상 자료로 실제 생성 1건을 실행하며, 유효성 검사 실패 시 최대 한 번 더 생성합니다. 기존 프로젝트 요금이 적용됩니다.
-- API 키·개인 키·토큰은 화면이나 로그에 출력하지 않습니다. 인증 자료를 브라우저로 전달하지 않습니다.
+- macOS의 기본 Chrome에서 전용 창 실행과 실제 게시를 검증했습니다. Windows와 Linux의 브라우저 감지는 단위 테스트 범위입니다.
+- Safari·Firefox·Brave에서는 일반 페이지 열기를 지원합니다. 전용 프로필 연결과 자동 게시에는 Chrome·Edge·Chromium 계열 기본 브라우저가 필요합니다.
+- 로그인이 반복해서 실패하면 **새 전용 창으로 다시 로그인**을 선택합니다. YouTube 채널이 없다면 먼저 채널을 준비합니다. [YouTube 로그인 문제 해결](https://support.google.com/youtube/troubleshooter/3219097) · [채널 만들기](https://support.google.com/youtube/answer/1646861?hl=ko)
+- 빌드해서 실행할 때는 `pnpm build` 후 `pnpm start`를 사용합니다. 브라우저 자동 열기를 끄려면 `pnpm start -- --no-open`을 사용합니다.
 
-## 사용 순서
+</details>
 
-1. **프로필 설정**에서 자동 감지된 기본 브라우저를 확인합니다. **기본 브라우저로 로그인**은 전용 창의 YouTube 채널 선택 화면을 엽니다. 직접 Google 로그인과 채널 준비를 마친 뒤 **로그인 완료 · 연결**을 누릅니다. macOS는 검증한 전용 창만 정상 종료하고 같은 프로필의 계정을 확인합니다. Windows는 전용 창을 먼저 완전히 종료해 주세요. 평소 사용하는 개인 브라우저 프로필은 사용하지 않습니다.
-2. 서로 다른 본인 Google 계정을 `유튜브1~3`에 연결합니다. 유튜브1 하나면 필수 경로를 사용할 수 있습니다. 같은 YouTube 채널의 중복 연결은 거부합니다.
-3. 영상을 불러오거나 링크를 입력한 뒤 목록에서 선택합니다. 고민과 근거를 검토하고 초안을 다듬습니다.
-4. **댓글 달기**를 누르면 실제 YouTube에 게시합니다. 창을 지켜보며 글자별 입력·게시·내 댓글 확인을 확인하세요.
-5. 결과가 `확인 필요`라면 재게시하지 않습니다. 운영 기록의 **재확인**은 읽기만 수행합니다.
+## 기술과 출처
 
-Google 로그인은 자동 제어가 없는 일반 브라우저에서 직접 진행합니다. 로그인 창에 디버깅 포트·자동화 플래그·보안 우회 옵션을 추가하지 않습니다. macOS는 LaunchServices의 `open -n -W -a … --args`로 별도 앱 인스턴스를 엽니다. 연결 시 운영체제 사용자·실행 파일·전용 프로필 경로가 모두 일치하는 실제 Chrome 프로세스에만 정상 종료를 요청하고 잠금 해제를 기다립니다. OS 실행기나 개인 브라우저에는 종료 신호를 보내지 않습니다. 검증하지 못한 프로세스는 직접 전용 창을 ⌘Q로 종료하도록 안내합니다. Windows 로그인 프로세스는 앱에서 강제 종료하지 않습니다.
+| 영역 | 사용 기술 | 프로젝트에서 하는 일 |
+| --- | --- | --- |
+| 화면 | [React 19](https://react.dev/) · [Vite 8](https://vite.dev/) | 세 단계 화면과 게시 상태 표시, 프런트엔드 빌드 |
+| 서버 | [Node.js 24](https://nodejs.org/) · [Express 5](https://expressjs.com/) | 로컬 HTTP API와 SSE로 작업 상태 전달 |
+| 형식과 검증 | [TypeScript](https://www.typescriptlang.org/) · [Zod](https://zod.dev/) | 화면과 서버의 데이터 형식 정의, 요청과 초안 검증 |
+| 저장 | [SQLite via node:sqlite](https://nodejs.org/api/sqlite.html) | 게시 이력과 중복 방지, 일일 한도 관리 |
+| 브라우저 | [Playwright](https://playwright.dev/) | 전용 프로필에서 실제 댓글 입력과 게시 확인 |
+| AI | [Google Gen AI SDK](https://github.com/googleapis/js-genai) · Vertex AI | 수집한 근거를 바탕으로 댓글 초안 생성 |
+| 디자인 자산 | [Lucide](https://lucide.dev/) · [DM Sans](https://fonts.google.com/specimen/DM+Sans) · [Noto Sans KR](https://fonts.google.com/noto/specimen/Noto+Sans+KR) | 아이콘과 화면 글꼴 |
 
-Google 로그인과 댓글 작성 준비는 별개입니다. 현재 계정에 채널이 없으면 **Google 로그인 완료 · YouTube 채널 준비 필요**를 표시하고 게시를 차단합니다. 기존 채널로 전환하거나 사용자가 새 채널을 준비한 뒤 다시 연결하세요. 앱이 채널을 자동 생성하지 않습니다. [YouTube 공식 채널 안내](https://support.google.com/youtube/answer/1646861?hl=ko)
+레이아웃과 스타일은 [React 화면](src/web/App.tsx)과 [프로젝트 CSS](src/web/styles.css)에 구현했습니다. 정확한 패키지 버전은 [package.json](package.json)에서 확인할 수 있습니다.
 
-사이트를 열 때 자동으로 댓글을 게시하지 않습니다. 비밀번호·추가 인증·CAPTCHA는 사용자가 직접 처리합니다.
+**작업에 사용한 스킬** · Codex Sites는 로컬 미리보기, PDF 스킬은 과제 원문 분석, project-validation-bootstrap은 검증 설정에 사용했습니다.
 
-로그인 창에서 `There was an issue signing you into YouTube`가 반복되면 프로필 설정의 **새 전용 창으로 다시 로그인**을 사용합니다. 기존 전용 프로필을 삭제하지 않고 새 세션 폴더를 만들어 선택합니다. 새 창에서 직접 로그인한 뒤 **로그인 완료 · 연결**로 확인합니다. 선택한 세션은 서버 재시작 후에도 유지하며, 새 창 실행 실패 시 이전 세션을 유지합니다. 이미 실행 중인 전용 창은 다시 표시하고, 진행 상황과 실패 이유를 버튼 아래에 유지합니다. 이 기능은 오래된 세션을 분리하기 위한 복구 경로이며, Google·YouTube의 계정별 로그인 거부를 해제하지는 않습니다. [YouTube 공식 로그인 문제 해결](https://support.google.com/youtube/troubleshooter/3219097)을 참고하세요.
+**디자인 참고 링크** · Anthropic의 공식 Claude Code `frontend-design` 스킬과 이용 조건입니다. 이 프로젝트에 적용했는지는 작업 기록에서 확인되지 않았습니다. [공식 플러그인](https://github.com/anthropics/claude-code/tree/main/plugins/frontend-design) · [스킬 원문](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md) · [이용 조건](https://github.com/anthropics/skills/blob/main/skills/frontend-design/LICENSE.txt)
 
-## 기본 브라우저와 운영체제
-
-- macOS는 LaunchServices HTTPS 연결과 앱 메타데이터, Windows는 HTTPS UserChoice와 실행 명령, Linux는 XDG HTTPS 연결과 `.desktop` 파일에서 기본 브라우저를 찾습니다. 운영체제의 기본 브라우저 설정을 변경하지 않습니다.
-- 검수 페이지는 OS의 기본 URL 열기 기능을 사용합니다. 로그인과 게시는 감지한 동일 브라우저 실행 파일을 사용합니다. 다른 브라우저로 임의 전환하지 않습니다.
-- OS에서 기본 브라우저를 바꾼 뒤 **다시 감지**를 누릅니다. 브라우저별 전용 프로필 폴더를 분리하고 이전 브라우저의 연결 완료 상태를 해제합니다. 기존 안정 버전 Chrome의 프로필은 유지합니다.
-- Safari·Firefox·Brave 및 인식하지 못한 실행 래퍼는 일반 YouTube와 검수 페이지 열기만 제공합니다. 전용 프로필 연결·자동 게시·브라우저 기반 댓글 수집은 지원하지 않으며 화면과 서버에서 차단합니다. 자동 게시를 사용하려면 Chrome·Edge·Chromium을 OS 기본 브라우저로 설정하고 다시 감지해야 합니다. [Playwright 브라우저 지원 문서](https://playwright.dev/docs/browsers)를 참고하세요.
-- macOS의 실제 기본 Chrome 감지·실행과 검수 화면을 확인했습니다. Windows·Linux의 감지 분기는 가상 OS 응답을 사용한 단위 테스트 범위이며, 해당 OS에서의 실제 로그인·게시 성공은 아직 검증하지 않았습니다. Google의 로그인 허용 여부는 계정·브라우저·보안 정책에 따라 달라집니다.
-
-## 과제 조건과 구현
-
-- 최신 영상: 공개 검색의 ‘오늘’ 및 필요 시 ‘이번 주’ 업로드 범위에서 최대 20개를 수집하고 실제 게시 시각으로 정렬합니다. 공개 검색의 후보 범위이며 YouTube 전체의 완전한 시간순 목록을 보장하지 않습니다.
-- 자막: 공개 자막과 스크립트 UI를 시도합니다. 부재·수집 실패 시 제목·설명으로 대체하고 출처를 표시합니다. 인기 댓글이 수집되지 않으면 초안 생성을 중단합니다.
-- 댓글: 공백 포함 화면상 글자 수 40~120자, 운명원 포함, 실제 출처에 있는 근거 문구와 연결된 표현을 검사합니다. 허위 후기의 자동 검사는 표현 패턴 기반이므로 사용자 검수도 필요합니다.
-- 제한: SQLite 트랜잭션·조건부 고유 인덱스로 영상당 1개를 강제합니다. 전체 프로필 합산 하루 기본 10개이며 한국시간 자정 기준입니다. 진행 중·결과 불명 작업도 한도에 포함합니다.
-- 기록: 게시 단계·성공·실패·확인 필요·화면 캡처를 로컬에 유지합니다. 프로그램 재시작 후 미확정 게시를 자동 반복하지 않습니다.
-- 가점: 링크 입력, Vertex 즉석 생성, 프로필 선택·연결 계정 순환, 유망 영상 관측을 제공합니다.
-- 유망 영상: 정확한 조회수의 1~2시간 간격 실측 변화량을 시간당 증가량으로 환산합니다. 현재 1,000~5,000회이면서 증가량 150회/시간 이상이어야 조건 충족입니다. 초안 전용이며 서버에서도 게시를 차단합니다. 관측은 버튼으로 실행합니다.
-
-## 구현 설명
-
-- [기술 선택과 코드 흐름](docs/CODE_WALKTHROUGH.ko.md)
-- [검수 체크리스트와 시연 참고](docs/REVIEW.ko.md)
-
-## 검증 및 공개 준비
+## 검증
 
 ```sh
 pnpm test
 pnpm typecheck
 pnpm build
-prek run --files <변경 파일>
-node scripts/check-public.mjs
 node scripts/check-public.mjs --history
-osv-scanner scan source --lockfile=pnpm-lock.yaml
-semgrep scan --config=p/typescript --config=p/javascript --error --metrics=off src scripts
 ```
 
-`check-public.mjs`는 Git 인덱스에 실제로 저장된 바이트와 공개 대상 작업 파일을 검사합니다. 커밋 훅은 `--staged`로 인덱스 전체를 검사하므로, 비밀 파일을 스테이징한 뒤 작업 파일만 덮어써도 차단합니다. `.env`, 브라우저 프로필·쿠키·저장 상태·운영 DB·인증 JSON·원본 캡처·백업 압축파일은 제외하고, 강제로 추가한 경우에도 커밋을 차단합니다. 인증 JSON과 DB는 이름을 바꿔도 내용을 검사합니다. `.env.example`의 비밀 설정은 빈 값만 허용합니다.
+공개 전 검사는 Git 인덱스와 이력에서 비밀정보를 확인합니다. 실제 `.env`, 인증 JSON, 브라우저 세션, 운영 DB, 원본 캡처는 로컬에서 관리합니다. [GitHub Actions 검증 결과](https://github.com/jindeveloper-ai/comment-studio-track2/actions)
 
-개발 환경에 `prek`와 Gitleaks 8.30.1을 설치하고 `prek install`로 커밋 훅을 준비합니다. Gitleaks가 없거나 검사에 실패하면 공개 검사는 통과하지 않습니다. `.gitleaks.toml`은 기본 규칙에 Google 세션 쿠키·Bearer 토큰 탐지를 추가합니다. 탐지된 원문과 스캐너의 표준 출력·오류 출력은 채팅·터미널·CI 로그에 전달하지 않습니다. 검사 임시 폴더는 종료 시 제거합니다.
-
-공개 전에는 `node scripts/check-public.mjs --history`로 현재 파일과 모든 Git 이력을 검사합니다. GitHub Actions도 같은 검사를 실행하며 개인 Google 인증이나 브라우저 로그인을 CI에 전달하지 않습니다. 실제 인증 파일은 저장소 밖에 두고 `.env`에는 경로만 기록합니다. 현재 Mac의 `.env`는 소유자만 읽고 쓰는 `600`, `.local`은 소유자만 접근하는 `700` 권한으로 관리합니다. 로컬 검사 통과와 원격 CI 실행 결과는 구분해 기록합니다.
-
-## 기술과 오픈소스 출처
-
-Node.js 24·TypeScript, React/Vite, Express, SQLite(`node:sqlite`), Playwright, Google Gen AI SDK, Zod, Lucide React를 사용합니다. 원본 패키지의 라이선스를 따릅니다.
-- [Node.js / SQLite](https://nodejs.org/api/sqlite.html)
-- [TypeScript](https://www.typescriptlang.org/) · [React](https://react.dev/) · [Vite](https://vite.dev/)
-- [Express](https://expressjs.com/) · [Playwright](https://playwright.dev/)
-- [Google Gen AI SDK](https://github.com/googleapis/js-genai)
-- [Zod](https://zod.dev/) · [Lucide](https://lucide.dev/)
-
-영상·썸네일·댓글의 권리는 원 저작자에게 있으며, 수집 결과와 운영 데이터는 공개 저장소에 포함하지 않습니다.
+[코드 흐름과 설계 이유](docs/CODE_WALKTHROUGH.ko.md) · [과제 요구사항 점검](docs/REQUIREMENTS_AUDIT.ko.md) · [검수 체크리스트](docs/REVIEW.ko.md)
