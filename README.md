@@ -4,6 +4,8 @@
 
 세 계정의 연결, 영상별 댓글 초안, 실제 YouTube 게시와 결과 확인을 담은 2분 38초 시연입니다.
 
+https://github.com/user-attachments/assets/23c7dd53-d2a3-4f17-a8e8-abf1506fc4cf
+
 [Google Drive에서 1080p 영상 재생](https://drive.google.com/file/d/1AeM-uR6TBH4u_tNLE6SJrW5pLQvwEok7/view)
 
 초안 요청은 캐시를 우선 사용하며, 새 생성·재생성 요청은 영상별 한국시간 하루 5회로 제한합니다. 수정한 댓글도 이미 게시한 문장과 같으면 다른 영상에 재사용할 수 없습니다.
